@@ -1,13 +1,17 @@
 const express = require('express');
+const path = require('path'); // Import path module
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server);
 
-app.use(express.static(__dirname));
+// Serve static files from the "client" folder
+app.use(express.static(path.join(__dirname, 'client')));
+
+// Serve the index.html file
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + './client/index.html');
+  res.sendFile('E:/real time chat application/client/index.html'); // Absolute path to index.html
 });
 
 let users = {};       // socket.id -> nickname
