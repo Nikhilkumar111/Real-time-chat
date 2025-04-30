@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Chat</title>
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 4rem;
+        font-family: Arial, sans-serif;
+        background: #e5ddd5;
+      }
+
+      #online-users {
+        padding: 10px;
+        background: #075e54;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 10px;
+      }
+
+      #messages > li {
+        margin-bottom: 10px;
+        padding: 10px;
+        max-width: 60%;
+        border-radius: 8px;
+        clear: both;
+      }
+
+      .self {
+        background-color: #dcf8c6;
+        float: right;
+        text-align: right;
+      }
+
+      .other {
+        background-color: #fff;
+        float: left;
+        text-align: left;
+      }
+
+      .system {
+        text-align: center;
+        font-style: italic;
+        color: gray;
+        background: none;
+      }
+
+      #typing {
+        font-style: italic;
+        color: #555;
+        padding: 0 1rem;
+      }
+
+      #form {
+        background: #f1f1f1;
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        border-top: 1px solid #ccc;
+      }
+
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+
+      #input:focus {
+        outline: none;
+      }
+
+      #form > button {
+        background: #075e54;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="online-users">Online users: </div>
+    <ul id="messages"></ul>
+    <p id="typing"></p>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
+      const typingDisplay = document.getElementById('typing');
+      const onlineUsers = document.getElementById('online-users');
+
+      const nickname = prompt("Enter your nickname") || "Anonymous";
+      socket.emit('set nickname', nickname);
+
+      let typingTimeout;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (text) {
+          const msg = { nickname, text };
+          appendMessage(msg, true);
+          socket.emit('chat message', msg);
+          input.value = '';
+        }
+      });
+
+      input.addEventListener('input', () => {
+        socket.emit('typing', nickname);
+      });
+
+      socket.on('chat message', function (msg) {
+        appendMessage(msg, false);
+      });
+
+      socket.on('typing', function (name) {
+        typingDisplay.textContent = `${name} is typing...`;
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          typingDisplay.textContent = '';
+        }, 1000);
+      });
+
+      socket.on('user list', function (userList) {
+        onlineUsers.textContent = 'Online users: ' + userList.join(', ');
+      });
+
+      function appendMessage(msg, isSelf) {
+        const item = document.createElement('li');
+
+        if (msg.nickname === 'System') {
+          item.className = 'system';
+          item.textContent = msg.text;
+        } else {
+          item.className = isSelf ? 'self' : 'other';
+          item.textContent = `${msg.nickname}: ${msg.text}`;
+        }
+
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    </script>
+  </body>
+</html>
