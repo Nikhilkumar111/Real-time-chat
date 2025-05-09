@@ -1,13 +1,19 @@
 require('dotenv').config();
 
 const express = require('express');
+<<<<<<< HEAD
 const path = require('path');
+=======
+const path = require('path'); // Import path module
+const app = express();
+>>>>>>> 7165612ce93cedb4337699e4fe7099cf81b4b049
 const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server);
 
+<<<<<<< HEAD
 const PORT = process.env.PORT || 4000;
 const STATIC_DIR = process.env.STATIC_DIR || path.join(__dirname, '../client');
 const INDEX_HTML_PATH = process.env.INDEX_HTML_PATH || path.join(STATIC_DIR, 'index.html');
@@ -23,6 +29,14 @@ app.use(express.static(STATIC_DIR));
 // ✅ Serve main HTML file
 app.get('/', (req, res) => {
   res.sendFile(INDEX_HTML_PATH);
+=======
+// Serve static files from the "client" folder
+app.use(express.static(path.join(__dirname, 'client')));
+
+// Serve the index.html file
+app.get('/', (req, res) => {
+  res.sendFile('E:/real time chat application/client/index.html'); // Absolute path to index.html
+>>>>>>> 7165612ce93cedb4337699e4fe7099cf81b4b049
 });
 
 
