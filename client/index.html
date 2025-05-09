@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Socket.IO Chat</title>
     <style>
       body {
@@ -97,54 +99,65 @@
     <ul id="messages"></ul>
     <p id="typing"></p>
     <form id="form" action="">
-      <input id="input" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
+      <input id="input" autocomplete="off" placeholder="Type a message..." />
+      <button type="submit">Send</button>
     </form>
 
+    <!-- Socket.IO Script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const socket = io();
+      const socket = io(); // Connect to the server (Vercel or localhost)
       const form = document.getElementById('form');
       const input = document.getElementById('input');
       const messages = document.getElementById('messages');
       const typingDisplay = document.getElementById('typing');
       const onlineUsers = document.getElementById('online-users');
 
+      // Prompt user for nickname
       const nickname = prompt("Enter your nickname") || "Anonymous";
+
+      // Emit nickname to the server
       socket.emit('set nickname', nickname);
 
       let typingTimeout;
 
+      // Handle sending message
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         const text = input.value.trim();
         if (text) {
           const msg = { nickname, text };
-          appendMessage(msg, true);
-          socket.emit('chat message', msg);
+          appendMessage(msg, true); // Display the message from the sender
+          socket.emit('chat message', msg); // Emit message to the server
           input.value = '';
         }
       });
 
+      // Handle typing indicator
       input.addEventListener('input', () => {
         socket.emit('typing', nickname);
       });
 
+      // Listen for new chat messages
       socket.on('chat message', function (msg) {
-        appendMessage(msg, false);
+        appendMessage(msg, false); // Display the message from others
       });
 
+      // Listen for typing indication
       socket.on('typing', function (name) {
         typingDisplay.textContent = `${name} is typing...`;
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
-          typingDisplay.textContent = '';
+          typingDisplay.textContent = ''; // Clear typing message after 1 second
         }, 1000);
       });
 
+      // Update the list of online users
       socket.on('user list', function (userList) {
         onlineUsers.textContent = 'Online users: ' + userList.join(', ');
       });
 
+      // Append a message to the chat window
       function appendMessage(msg, isSelf) {
         const item = document.createElement('li');
 
@@ -157,7 +170,7 @@
         }
 
         messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+        window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom
       }
     </script>
   </body>

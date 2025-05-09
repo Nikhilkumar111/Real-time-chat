@@ -1,14 +1,30 @@
+require('dotenv').config();
+
 const express = require('express');
-const app = express();
+const path = require('path');
 const http = require('http');
+const app = express();
 const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server);
 
-app.use(express.static(__dirname));
+const PORT = process.env.PORT || 4000;
+const STATIC_DIR = process.env.STATIC_DIR || path.join(__dirname, '../client');
+const INDEX_HTML_PATH = process.env.INDEX_HTML_PATH || path.join(STATIC_DIR, 'index.html');
+
+// Validate STATIC_DIR
+if (!STATIC_DIR) {
+  throw new Error('STATIC_DIR must be defined in .env or fallback to a valid path');
+}
+
+// ✅ Serve static files
+app.use(express.static(STATIC_DIR));
+
+// ✅ Serve main HTML file
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + './client/index.html');
+  res.sendFile(INDEX_HTML_PATH);
 });
+
 
 let users = {};       // socket.id -> nickname
 let nicknames = {};   // nickname -> socket.id
@@ -16,20 +32,16 @@ let nicknames = {};   // nickname -> socket.id
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  // Set nickname
   socket.on('set nickname', (nickname) => {
     users[socket.id] = nickname;
     nicknames[nickname] = socket.id;
-
     socket.broadcast.emit('chat message', { nickname: 'System', text: `🔵 ${nickname} joined` });
     io.emit('user list', Object.values(users));
   });
 
-  // Message handler
   socket.on('chat message', (msg) => {
     const { text, nickname } = msg;
 
-    // Handle private message
     if (text.startsWith('@')) {
       const spaceIndex = text.indexOf(' ');
       if (spaceIndex !== -1) {
@@ -50,12 +62,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Typing indicator
   socket.on('typing', (nickname) => {
     socket.broadcast.emit('typing', nickname);
   });
 
-  // Disconnect handler
   socket.on('disconnect', () => {
     const nickname = users[socket.id];
     delete nicknames[nickname];
@@ -67,6 +77,6 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(4000, () => {
-  console.log('listening on *:4000');
+server.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
